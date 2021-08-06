@@ -1,0 +1,20 @@
+{
+  "name": "join_videos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "predeploy": "rm -rf node_modules/axios && npm install --platform=linux --arch=x64",
+    "deploy": "serverless deploy -v",
+    "postdeploy": "rm -rf node_modules/axios && npm install axios"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.962.0",
+    "axios": "^0.21.1",
+    "fs": "^0.0.1-security",
+    "util": "^0.12.4"
+  }
+}
