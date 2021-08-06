@@ -1,35 +1,37 @@
 
 service: join-videos
-
 frameworkVersion: '2'
 
 provider:
   name: aws
-  runtime: python3.8
+  runtime: nodejs12.x
   lambdaHashingVersion: 20201221
-  region: us-east-1
-  memorySize: 512
   iamRoleStatements:
-    - Effect: Allow
+    - Effect: "Allow"
       Action:
-        - s3:GetObject
-        - s3:PutObject
+        - "s3:ListBucket"
+      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+    - Effect: "Allow"
+      Action:
+        - "s3:PutObject"
       Resource:
-        - "arn:aws:s3:::*"
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - "Ref" : "ServerlessDeploymentBucket"
+            - "/*"
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+
 
 functions:
-  video_handler:
-    handler: video_handler.handle
-    environment:
-      bucket: bucket-icods-videos
-    events:
-      - s3:
-          bucket: bucket-icods-videos
-          event: s3:ObjectCreated:*
-
-plugins:
-  - serverless-python-requirements
-
-custom:
-  pythonRequirements:
-    dockerizePip: non-linux
+  hello:
+    handler: handler.hello
+#resources:
+#  Resources:
+#    NewResource:
+#      Type: AWS::S3::Bucket
+#      Properties:
+#        BucketName: my-new-bucket
