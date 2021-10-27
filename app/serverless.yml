@@ -1,0 +1,56 @@
+service: concat-videos
+frameworkVersion: "2"
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  timeout: 120
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:GetObject
+      Resource: "arn:aws:s3:::${self:custom.bucket}/*"
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:GetObject
+      Resource: "arn:aws:s3:::${self:custom.outputBucket}/*"
+
+functions:
+  concat:
+    handler: handler.concat
+    events:
+      - s3: ${self:custom.bucket}
+    layers:
+      - { Ref: FfmpegLambdaLayer }
+
+plugins:
+  - serverless-dotenv-plugin
+
+layers:
+  ffmpeg:
+    path: layer
+
+resources:
+  Resources:
+    OutputBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.outputBucket}
+        AccessControl: PublicRead
+        CorsConfiguration:
+          CorsRules:
+            - AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - HEAD
+              AllowedOrigins:
+                - "*"
+              AllowedHeaders:
+                - "*"
+
+custom:
+  bucket: ${env:ICODS_VIDEO_BUCKET}
+  outputBucket: ${env:ICODS_VIDEO_OUTPUT_BUCKET}

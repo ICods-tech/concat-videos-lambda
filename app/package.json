@@ -1,0 +1,14 @@
+{
+  "name": "aws-lambda-layer",
+  "description": "",
+  "version": "0.1.0",
+  "dependencies": {
+    "aws-sdk": "^2.1015.0",
+    "fluent-ffmpeg": "^2.1.2"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "dotenv": "^10.0.0",
+    "serverless-dotenv-plugin": "^3.10.0"
+  }
+}
