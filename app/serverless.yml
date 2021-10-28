@@ -1,27 +1,30 @@
 service: concat-videos
 frameworkVersion: "2"
+useDotenv: true
+variablesResolutionMode: 20210326
 
 provider:
   name: aws
   runtime: nodejs12.x
   timeout: 120
+  lambdaHashingVersion: "20201221"
   iamRoleStatements:
     - Effect: Allow
       Action:
         - s3:PutObject
         - s3:GetObject
-      Resource: "arn:aws:s3:::${self:custom.bucket}/*"
+      Resource: "arn:aws:s3:::${env:ICODS_VIDEO_BUCKET}/*"
     - Effect: Allow
       Action:
         - s3:PutObject
         - s3:GetObject
-      Resource: "arn:aws:s3:::${self:custom.outputBucket}/*"
+      Resource: "arn:aws:s3:::${env:ICODS_VIDEO_OUTPUT_BUCKET}/*"
 
 functions:
   concat:
-    handler: handler.concat
+    handler: src/handler.concat
     events:
-      - s3: ${self:custom.bucket}
+      - s3: ${env:ICODS_VIDEO_BUCKET}
     layers:
       - { Ref: FfmpegLambdaLayer }
 
@@ -37,7 +40,7 @@ resources:
     OutputBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: ${self:custom.outputBucket}
+        BucketName: ${env:ICODS_VIDEO_OUTPUT_BUCKET}
         AccessControl: PublicRead
         CorsConfiguration:
           CorsRules:
@@ -50,7 +53,3 @@ resources:
                 - "*"
               AllowedHeaders:
                 - "*"
-
-custom:
-  bucket: ${env:ICODS_VIDEO_BUCKET}
-  outputBucket: ${env:ICODS_VIDEO_OUTPUT_BUCKET}

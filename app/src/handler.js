@@ -62,38 +62,7 @@ module.exports.concat = async ({ Records: records }, context) => {
           mergedVideo.mergeToFile(mergedVideoPath);
         });
         console.log(`==> Uploading video to s3`);
-        // await childProcessPromise.spawn(
-        //   "/opt/bin/ffmpeg",
-        //   [
-        //     "-loglevel",
-        //     "error",
-        //     "-y",
-        //     "-i",
-        //     inputFile,
-        //     "-i",
-        //     inputFileIcods,
-        //     "-filter_complex",
-        //     "concat=n=2:v=1:a=1",
-        //     mergedVideoPath,
-        //   ],
-        //   { env: process.env, cwd: workdir }
-        // );
-        // spawnSync(
-        //   "/opt/bin/ffmpeg",
-        //   [
-        //     "-loglevel",
-        //     "error",
-        //     "-y",
-        //     "-i",
-        //     inputFile,
-        //     "-i",
-        //     inputFileIcods,
-        //     "-filter_complex",
-        //     "concat=n=2:v=1:a=1",
-        //     mergedVideoPath,
-        //   ],
-        //   { env: process.env, cwd: workdir }
-        // );
+
         await s3Util.uploadFileToS3(
           process.env.ICODS_VIDEO_OUTPUT_BUCKET,
           resultKey,
