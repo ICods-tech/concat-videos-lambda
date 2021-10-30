@@ -6,22 +6,23 @@ variablesResolutionMode: 20210326
 provider:
   name: aws
   runtime: nodejs12.x
-  timeout: 240
   lambdaHashingVersion: "20201221"
   iamRoleStatements:
     - Effect: Allow
       Action:
         - s3:PutObject
         - s3:GetObject
+        - s3:deleteObject
       Resource: "arn:aws:s3:::${env:ICODS_VIDEO_BUCKET}/*"
     - Effect: Allow
       Action:
-        - s3:PutObject
-        - s3:GetObject
+        - s3:*
       Resource: "arn:aws:s3:::${env:ICODS_VIDEO_OUTPUT_BUCKET}/*"
 
 functions:
   concat:
+    timeout: 200
+    memorySize: 768
     handler: src/handler.concat
     events:
       - s3: ${env:ICODS_VIDEO_BUCKET}
@@ -34,22 +35,3 @@ plugins:
 layers:
   ffmpeg:
     path: layer
-
-resources:
-  Resources:
-    OutputBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${env:ICODS_VIDEO_OUTPUT_BUCKET}
-        AccessControl: PublicRead
-        CorsConfiguration:
-          CorsRules:
-            - AllowedMethods:
-                - GET
-                - PUT
-                - POST
-                - HEAD
-              AllowedOrigins:
-                - "*"
-              AllowedHeaders:
-                - "*"
