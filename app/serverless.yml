@@ -6,7 +6,7 @@ variablesResolutionMode: 20210326
 provider:
   name: aws
   runtime: nodejs12.x
-  timeout: 120
+  timeout: 240
   lambdaHashingVersion: "20201221"
   iamRoleStatements:
     - Effect: Allow
