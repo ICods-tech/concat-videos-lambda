@@ -15,13 +15,18 @@ const os = require("os");
 
 const EXTENSION = ".mp4";
 const MIME_TYPE = "video/mp4";
-
+const RESOLUTION = "1080x1920";
+const CODEC = "libx264"
 module.exports.concat = async ({ Records: records }, context) => {
   try {
     await Promise.all(
       records.map(async (record) => {
-        const { key } = record.s3.object;
 
+        async function resizeVideo(file){
+      
+        }
+        const { key } = record.s3.object;
+        
         const inputBucket = record.s3.bucket.name;
         const id = context.awsRequestId;
         const resultKey = key.replace(/\.[^.]+$/, EXTENSION);
@@ -40,13 +45,33 @@ module.exports.concat = async ({ Records: records }, context) => {
         await s3Util.downloadFileFromS3(inputBucket, key, inputFile);
 
         console.log(`==> file ${key} downloaded successfuly`);
-
+        
+        console.log('==> Resize video');
+        const resizeVideoOut = path.join(workdir, id + '-resized.mp4');
+        await new Promise((resolve, reject) => {
+          ffmpeg(inputFile)
+          .output(resizeVideoOut)
+          .videoCodec(CODEC)  
+          .size(RESOLUTION)
+          .on('error', function(err) {
+              console.log('An error occurred: ' + err.message);
+          })  
+          .on('start', function(e) { 
+              console.log(e);
+          })
+          .on('end', function() { 
+              console.log('Finished processing'); 
+              resolve();
+          })
+          .run();
+          
+        })
         await new Promise((resolve, reject) => {
           ffmpeg()
-            .addInput(inputFile)
+            .addInput(resizeVideoOut)
             .addInput(inputFileIcods)
             .outputFPS(60)
-            .videoCodec("libx264")    
+            .videoCodec(CODEC)    
             .on("error", function (err) {
               console.log("An error occurred: " + err.message);
               reject(err);
