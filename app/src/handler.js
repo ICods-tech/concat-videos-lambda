@@ -16,22 +16,19 @@ const os = require("os");
 const EXTENSION = ".mp4";
 const MIME_TYPE = "video/mp4";
 const RESOLUTION = "1080x1920";
-const CODEC = "libx264"
+const CODEC = "libx264";
 module.exports.concat = async ({ Records: records }, context) => {
   try {
     await Promise.all(
       records.map(async (record) => {
-
-        async function resizeVideo(file){
-      
-        }
+        async function resizeVideo(file) {}
         const { key } = record.s3.object;
-        
+
         const inputBucket = record.s3.bucket.name;
         const id = context.awsRequestId;
         const resultKey = key.replace(/\.[^.]+$/, EXTENSION);
         const workdir = os.tmpdir();
-        const inputFile = path.join(workdir, id + path.extname(key));
+        let inputFile = path.join(workdir, id + path.extname(key));
         const inputFileIcods = path.join(workdir, "icods.mp4");
 
         const mergedVideoName = `converted-${key}`;
@@ -43,35 +40,58 @@ module.exports.concat = async ({ Records: records }, context) => {
           inputFileIcods
         );
         await s3Util.downloadFileFromS3(inputBucket, key, inputFile);
-
         console.log(`==> file ${key} downloaded successfuly`);
-        
-        console.log('==> Resize video');
-        const resizeVideoOut = path.join(workdir, id + '-resized.mp4');
-        await new Promise((resolve, reject) => {
-          ffmpeg(inputFile)
-          .output(resizeVideoOut)
-          .videoCodec(CODEC)  
-          .size(RESOLUTION)
-          .on('error', function(err) {
-              console.log('An error occurred: ' + err.message);
-          })  
-          .on('start', function(e) { 
-              console.log(e);
-          })
-          .on('end', function() { 
-              console.log('Finished processing'); 
+
+        console.log(`==> Get file size info`);
+        let resolutionFullHd = false;
+        await new Promise(async (resolve, reject) => {
+          await ffmpeg.ffprobe(inputFile, function (err, metadata) {
+            if (err) {
+              console.error(err);
+            } else {
+              const { streams } = metadata;
+              streams.forEach((stream) => {
+                if (stream.codec_type === "video") {
+                  const { width, height } = stream;
+                  if (width === 1080 && height === 1920) {
+                    console.log("==> Full HD detected");
+                    resolutionFullHd = true;
+                  }
+                }
+              });
               resolve();
-          })
-          .run();
-          
-        })
+            }
+          });
+        });
+        if (!resolutionFullHd) {
+          console.log("==> Init resize video...");
+          const resizeVideoOut = path.join(workdir, id + "-resized.mp4");
+          await new Promise((resolve, reject) => {
+            ffmpeg(inputFile)
+              .output(resizeVideoOut)
+              .videoCodec(CODEC)
+              .size(RESOLUTION)
+              .on("error", function (err) {
+                console.log("An error occurred: " + err.message);
+              })
+              .on("start", function (e) {
+                console.log(e);
+              })
+              .on("end", function () {
+                inputFile = resizeVideoOut
+                console.log("==> Finished resize video!");
+                resolve();
+              })
+              .run();
+          });
+        }
+        
         await new Promise((resolve, reject) => {
           ffmpeg()
-            .addInput(resizeVideoOut)
+            .addInput(inputFile)
             .addInput(inputFileIcods)
             .outputFPS(60)
-            .videoCodec(CODEC)    
+            .videoCodec(CODEC)
             .on("error", function (err) {
               console.log("An error occurred: " + err.message);
               reject(err);
@@ -94,7 +114,6 @@ module.exports.concat = async ({ Records: records }, context) => {
         );
         // delete old video
         await s3Util.deleteFileToS3(inputBucket, key);
-
       })
     );
 
